@@ -3,6 +3,7 @@ Requirements:
   - >=python-efl-1.13.99
   - PyPDF2
   - pyxdg
+  - elmextensions
 
 Install:
 
