@@ -55,7 +55,8 @@ from efl.elementary.label import Label
 from efl.elementary.spinner import Spinner
 from efl.elementary.progressbar import Progressbar
 from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
-from efl.elementary.fileselector import Fileselector
+#from efl.elementary.fileselector import Fileselector
+from elmextensions import FileSelector as Fileselector
 from efl.elementary.background import Background
 from efl.elementary.table import Table
 from efl.elementary.entry import Entry
@@ -440,7 +441,6 @@ class Document(Table):
             if not info:
                 log.warn("Metadata information could not be extracted from the document")
                 return
-
             log.info(
                 "%s %s %s %s %s",
                 info.title, info.author, info.subject, info.creator, info.producer)
@@ -769,6 +769,7 @@ class Fs(Window):
 
     def __init__(self, done_cb):
         SCALE = elm_conf.scale
+        self.done_cb = done_cb
 
         super(Fs, self).__init__(
             "fileselector", ELM_WIN_DIALOG_BASIC, title="Select file",
@@ -778,16 +779,27 @@ class Fs(Window):
         self.resize_object_add(bg)
         bg.show()
 
-        fs = Fileselector(
+        self.fs = fs = Fileselector(
             self, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH,
             is_save=False, expandable=False, path=os.path.expanduser("~"))
         self.resize_object_add(fs)
-        fs.mime_types_filter_append(["application/pdf", ], "pdf")
-        fs.mime_types_filter_append(["*", ], "all")
-        fs.callback_done_add(lambda x, y: done_cb(y))
-        fs.callback_done_add(lambda x, y: self.delete())
+        fs.setMode("Open")
+        #fs.mime_types_filter_append(["application/pdf", ], "pdf")
+        #fs.mime_types_filter_append(["*", ], "all")
+        fs.callback_activated_add(self.file_selected)
+        fs.callback_cancel_add(self.close)
+        
+        self.callback_delete_request_add(self.close)
         fs.show()
         self.show()
+
+    def file_selected(self, fs, the_file):
+        self.done_cb(the_file)
+        self.close()
+    
+    def close(self, arg=None):
+        self.fs.shutdown()
+        self.delete()
 
 
 class PasswordPrompt(Popup):
